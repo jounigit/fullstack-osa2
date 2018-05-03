@@ -1,25 +1,26 @@
 import React from 'react';
+import axios from 'axios'
 
-const Henkilo = ({ henkilo }) => <p>{henkilo.nimi} {henkilo.numero}</p>
+const Person = ({ person }) => <p>{person.name} {person.number}</p>
 
-const HakuLomake = ({ filtteri, inputTxt}) => {
+const SearchForm = ({ filtter, inputTxt}) => {
   return (
     <div>
-    rajaa näytettäviä:  <input value={filtteri} onChange={inputTxt} />
+    rajaa näytettäviä:  <input value={filtter} onChange={inputTxt} />
     </div>
   )
 }
 
-const LisaysLomake = ({henkilo, nimi, numero, inputP, inputN}) => {
+const AddForm = ({add, name, number, inputP, inputN}) => {
   return (
-    <form onSubmit={henkilo}>
+    <form onSubmit={add}>
       <div>
       nimi:
-      <input value={nimi} onChange={inputP} />
+      <input value={name} onChange={inputP} />
       </div>
       <div>
       numero:
-      <input value={numero} onChange={inputN} />
+      <input value={number} onChange={inputN} />
       </div>
       <button type="submit">tallenna</button>
     </form>
@@ -30,81 +31,89 @@ class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      henkilot: [
-        { nimi: 'Arto Hellas', numero: '040-123456' },
-        { nimi: 'Martti Tienari', numero: '040-123456' },
-        { nimi: 'Arto Järvinen', numero: '040-123456' },
-        { nimi: 'Lea Kutvonen', numero: '040-123456' }
-      ],
-      rajattuHaku: [],
-      uusiNimi: '',
-      uusiNumero: '',
-      filter: ''
+      persons: [],
+      searchPersons: [],
+      newName: '',
+      newNumber: '',
+      filter: '',
+      showAll: true
     }
+    console.log('constructor')
+  }
+
+  componentDidMount() {
+    console.log('will mount')
+    axios
+      .get('http://localhost:3001/persons')
+      .then(response => {
+        console.log('promise fulfilled')
+        this.setState({ persons: response.data })
+      })
   }
 
   addPerson = (event) => {
     event.preventDefault()
-    const nimet = this.state.henkilot.map(henkilo => henkilo.nimi)
-    if (nimet.includes(this.state.uusiNimi)) {
+    const names = this.state.persons.map(person => person.name)
+    if (names.includes(this.state.newName)) {
       this.setState({
-        uusiNimi: '',
-        uusiNumero: ''
+        newName: '',
+        newNumber: ''
        })
        console.log('Nimi on jo käytössä!')
        alert("Nimi on jo käytössä!")
     } else {
       const personObject = {
-        nimi: this.state.uusiNimi,
-        numero: this.state.uusiNumero
-      }
+        name: this.state.newName,
+        number: this.state.newNumber,
+        id: this.state.persons.length + 1
+    }
 
-      const henkilot = this.state.henkilot.concat(personObject)
-
+      const persons = this.state.persons.concat(personObject)
       this.setState({
-        henkilot,
-        uusiNimi: '',
-        uusiNumero: ''
+        persons,
+        newName: '',
+        newNumber: '',
+        filter: '',
+        showAll: true
       })
     }
   }
 
-  handlePersonChange = (event) => {
-    console.log(event.target.value)
-    this.setState({ uusiNimi: event.target.value })
-  }
+  personInput = (event) =>  this.setState({ newName: event.target.value })
 
-  numeroIput = (event) => {
-    console.log(event.target.value)
-    this.setState({ uusiNumero: event.target.value })
-  }
+  numberIput = (event) => this.setState({ newNumber: event.target.value })
 
-  rajaaHaku = (event) => {
-    const haku = event.target.value
-    const re = new RegExp(haku, 'g')
-    const pienet = (str) => str.toLowerCase()
-    this.setState({ filter: haku })
-    let rajattuHaku = this.state.henkilot.filter(henkilo => pienet(henkilo.nimi).match(re) )
-    console.log(rajattuHaku)
-    this.setState({ rajattuHaku })
-    console.log("State: ", this.state.rajattuHaku)
+  searchInput = (event) => {
+    this.setState({ filter: event.target.value })
+    const re = new RegExp(event.target.value.toLowerCase(), 'g')
+    const toLower = (str) => str.toLowerCase()
+    let searchPersons = this.state.persons.filter(x => toLower(x.name).match(re) )
+    console.log(searchPersons)
+    this.setState({ searchPersons, showAll: false })
   }
-
-  naytaHenkilot = (haku, kaikki) => (haku.length > 0) ? haku : kaikki
 
   render() {
-    const naytaHaku = this.state.rajattuHaku.map((henkilo, i) => <Henkilo key={i} henkilo={henkilo} />)
-    const naytaKaikki = this.state.henkilot.map((henkilo, i) => <Henkilo key={i} henkilo={henkilo} />)
+    const showPersons =
+    this.state.showAll ?
+    this.state.persons :
+    this.state.searchPersons
+    console.log('showPersons: ', showPersons )
+
     return (
       <div>
-        <HakuLomake filtteri={this.state.filter} inputTxt={this.rajaaHaku} />
+        <SearchForm filtter={this.state.filter} inputTxt={this.searchInput} />
 
         <h2>Puhelinluettelo</h2>
-        <LisaysLomake henkilo={this.addPerson} nimi={this.state.uusiNimi} numero={this.state.uusiNumero} inputP={this.handlePersonChange} inputN={this.numeroIput} />
+        <AddForm
+        add={this.addPerson}
+        name={this.state.newName}
+        number={this.state.newNumber}
+        inputP={this.personInput}
+        inputN={this.numberIput} />
 
         <h2>Numerot</h2>
         <div>
-          {this.naytaHenkilot(naytaHaku, naytaKaikki)}
+          {showPersons.map(p => <Person key={p.id} person={p} />)}
         </div>
       </div>
     )
