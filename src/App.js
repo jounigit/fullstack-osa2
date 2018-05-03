@@ -1,7 +1,15 @@
 import React from 'react';
 import personService from './services/persons'
 
-const Person = ({ person }) => <p>{person.name} {person.number}</p>
+const Person = ({ person, toggleDelete }) => {
+  return (
+    <tr>
+      <td>{person.name}</td>
+      <td>{person.number}</td>
+      <td><button onClick={toggleDelete}>poista</button></td>
+    </tr>
+  )
+}
 
 const SearchForm = ({ filtter, inputTxt}) => {
   return (
@@ -83,8 +91,23 @@ class App extends React.Component {
           })
         })
     }
-
   }
+
+  toggleDeleteOf = (id) => {
+  return () => {
+    const person = this.state.persons.find(p => p.id === id)
+    if (window.confirm("poistetaanko "+person.name)) {
+      personService
+      .move(id)
+      .then(response => {
+        const persons = this.state.persons.filter(p => p.id !== id)
+        this.setState({
+              persons
+            })
+      })
+    }  
+  }
+}
 
   personInput = (event) =>  this.setState({
     newName: event.target.value,
@@ -128,7 +151,16 @@ class App extends React.Component {
 
         <h2>Numerot</h2>
         <div>
-          {showPersons.map(p => <Person key={p.id} person={p} />)}
+          <table>
+            <tbody>
+              {showPersons.map(person =>
+                <Person
+                key={person.id}
+                person={person}
+                toggleDelete={this.toggleDeleteOf(person.id)}
+              />)}
+              </tbody>
+          </table>
         </div>
       </div>
     )
