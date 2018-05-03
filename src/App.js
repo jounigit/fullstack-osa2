@@ -4,6 +4,20 @@ const Otsikko = ({ kurssi }) => <h2>{kurssi.nimi}</h2>
 
 const Osa = ({ osa }) => <p>{osa.nimi} {osa.tehtavia}</p>
 
+const Yhteensa = ({ kurssi }) => {
+  let summa = 0
+  kurssi.osat.forEach((osa) => {
+      //console.log(osa.tehtavia)
+      summa = summa + osa.tehtavia
+    })
+    console.log('SUMMA: ', summa)
+    return (
+      <div>
+        <p>yhteensä {summa} tehtävää</p>
+      </div>
+    )
+}
+
 const Sisalto = ({ kurssi }) => {
   const osat = kurssi.osat
   return (
@@ -19,6 +33,7 @@ const Kurssi = ({ kurssi }) => {
     <div>
       <Otsikko kurssi={kurssi} />
       <Sisalto kurssi={kurssi} />
+      <Yhteensa kurssi={kurssi} />
     </div>
   )
 }
