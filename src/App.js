@@ -35,6 +35,17 @@ const AddForm = ({add, name, number, inputP, inputN}) => {
  )
 }
 
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null
+  }
+  return (
+    <div className="message">
+      {message}
+    </div>
+  )
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props)
@@ -44,6 +55,7 @@ class App extends React.Component {
       newName: '',
       newNumber: '',
       filter: '',
+      message: null,
       showAll: true
     }
     console.log('constructor')
@@ -57,22 +69,50 @@ class App extends React.Component {
       })
    }
 
-   personExist = (name) => {
-     const names = this.state.persons.map(person => person.name)
-     if (names.includes(name)) {
-       this.setState({
-         newName: '',
-         newNumber: ''
-        })
-        console.log('Nimi on jo käytössä!')
-        alert("Nimi on jo käytössä!")
+   personExist = (name, number) => {
+     const person = this.state.persons.find(p => p.name === name)
+     if (person) {
+       const q = window.confirm(person.name + " on jo olemassa, korvataanko vanha numero uudella?")
+      if (q) {
+        this.updateNumber(person.id, number)
         return true
+      } else {
+        this.setState({
+          newName: '',
+          newNumber: '',
+          filter: '',
+          showAll: true
+        })
+        return true
+      }
      }
+   }
+
+   updateNumber = (id, number) => {
+    const person = this.state.persons.find(p => p.id === id)
+    const changedPerson = { ...person, number: number }
+
+    personService
+      .update(id, changedPerson)
+      .then(changedPerson => {
+        const persons = this.state.persons.filter(p => p.id !== id)
+          this.setState({
+            persons: persons.concat(changedPerson),
+            message: `vaihdettiin henkilön '${person.name}' numero `,
+            newName: '',
+            newNumber: '',
+            filter: '',
+            showAll: true
+          })
+          setTimeout(() => {
+            this.setState({message: null})
+          }, 5000)
+      })
    }
 
   addPerson = (event) => {
     event.preventDefault()
-    if ( !this.personExist(this.state.newName) ) {
+    if ( !this.personExist(this.state.newName, this.state.newNumber) ) {
       const personObject = {
         name: this.state.newName,
         number: this.state.newNumber,
@@ -84,30 +124,40 @@ class App extends React.Component {
         .then(newPerson => {
           this.setState({
             persons: this.state.persons.concat(newPerson),
+            message: `lisättiin '${this.state.newName}'  `,
             newName: '',
             newNumber: '',
             filter: '',
             showAll: true
           })
+          setTimeout(() => {
+            this.setState({message: null})
+          }, 5000)
         })
     }
   }
 
-  toggleDeleteOf = (id) => {
-  return () => {
-    const person = this.state.persons.find(p => p.id === id)
-    if (window.confirm("poistetaanko "+person.name)) {
-      personService
-      .move(id)
-      .then(response => {
-        const persons = this.state.persons.filter(p => p.id !== id)
-        this.setState({
-              persons
-            })
-      })
-    }  
+  deletePerson = (id) => {
+    return () => {
+      const person = this.state.persons.find(p => p.id === id)
+
+      if (window.confirm("poistetaanko "+person.name)) {
+        personService
+        .move(id)
+        .then(response => {
+          const persons = this.state.persons.filter(p => p.id !== id)
+          this.setState({
+                persons,
+                message: `poistettiin '${person.name}'  `,
+              })
+              setTimeout(() => {
+                this.setState({message: null})
+              }, 5000)
+          })
+      }
+
+    }
   }
-}
 
   personInput = (event) =>  this.setState({
     newName: event.target.value,
@@ -135,13 +185,17 @@ class App extends React.Component {
     this.state.showAll ?
     this.state.persons :
     this.state.searchPersons
-    console.log('showPersons: ', showPersons )
 
     return (
       <div>
+
+        <h1>Puhelinluettelo</h1>
+
+        <Notification message={this.state.message}/>
+
         <SearchForm filtter={this.state.filter} inputTxt={this.searchInput} />
 
-        <h2>Puhelinluettelo</h2>
+        <h2>Lisää uusi</h2>
         <AddForm
         add={this.addPerson}
         name={this.state.newName}
@@ -157,7 +211,7 @@ class App extends React.Component {
                 <Person
                 key={person.id}
                 person={person}
-                toggleDelete={this.toggleDeleteOf(person.id)}
+                toggleDelete={this.deletePerson(person.id)}
               />)}
               </tbody>
           </table>
