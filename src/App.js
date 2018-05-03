@@ -80,10 +80,10 @@ class App extends React.Component {
   }
 
   rajaaHaku = (event) => {
-    const haku = event.target.value
+    const haku = event.target.value.toLowerCase()
     const re = new RegExp(haku, 'g')
     const pienet = (str) => str.toLowerCase()
-    this.setState({ filter: haku })
+    this.setState({ filter: event.target.value })
     let rajattuHaku = this.state.henkilot.filter(henkilo => pienet(henkilo.nimi).match(re) )
     console.log(rajattuHaku)
     this.setState({ rajattuHaku })
