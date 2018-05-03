@@ -30,7 +30,7 @@ const AddForm = ({add, name, number, inputP, inputN}) => {
      numero:
      <input value={number} onChange={inputN} />
      </div>
-     <button type="submit">tallenna</button>
+     <button type="submit">lisää</button>
    </form>
  )
 }
@@ -58,7 +58,6 @@ class App extends React.Component {
       message: null,
       showAll: true
     }
-    console.log('constructor')
   }
 
   componentDidMount() {
@@ -70,7 +69,8 @@ class App extends React.Component {
    }
 
    personExist = (name, number) => {
-     const person = this.state.persons.find(p => p.name === name)
+     const person = this.state.persons.find(p => p.name.toLowerCase() === name.toLowerCase())
+
      if (person) {
        const q = window.confirm(person.name + " on jo olemassa, korvataanko vanha numero uudella?")
       if (q) {
@@ -108,32 +108,46 @@ class App extends React.Component {
             this.setState({message: null})
           }, 5000)
       })
+      .catch(error => {
+        alert(`Henkilön '${person.name}' tiedot on jo poistettu palvelimelta`)
+        this.setState({
+          persons: this.state.persons.filter(p => p.id !== id),
+          newName: '',
+          newNumber: ''
+        })
+      })
    }
 
   addPerson = (event) => {
     event.preventDefault()
-    if ( !this.personExist(this.state.newName, this.state.newNumber) ) {
-      const personObject = {
-        name: this.state.newName,
-        number: this.state.newNumber,
-        id: this.state.persons.length + 1
-      }
 
-      personService
-        .create(personObject)
-        .then(newPerson => {
-          this.setState({
-            persons: this.state.persons.concat(newPerson),
-            message: `lisättiin '${this.state.newName}'  `,
-            newName: '',
-            newNumber: '',
-            filter: '',
-            showAll: true
+    if ( this.state.newName === '' || this.state.newNumber === '' ) {
+      alert(`nimi tai numero puuttuu`)
+    }
+    else {
+      if ( !this.personExist(this.state.newName, this.state.newNumber) ) {
+        const personObject = {
+          name: this.state.newName,
+          number: this.state.newNumber,
+          id: this.state.persons.length + 1
+        }
+
+        personService
+          .create(personObject)
+          .then(newPerson => {
+            this.setState({
+              persons: this.state.persons.concat(newPerson),
+              message: `lisättiin '${this.state.newName}'  `,
+              newName: '',
+              newNumber: '',
+              filter: '',
+              showAll: true
+            })
+            setTimeout(() => {
+              this.setState({message: null})
+            }, 5000)
           })
-          setTimeout(() => {
-            this.setState({message: null})
-          }, 5000)
-        })
+        }
     }
   }
 
@@ -142,21 +156,29 @@ class App extends React.Component {
       const person = this.state.persons.find(p => p.id === id)
 
       if (window.confirm("poistetaanko "+person.name)) {
-        personService
-        .move(id)
-        .then(response => {
-          const persons = this.state.persons.filter(p => p.id !== id)
-          this.setState({
-                persons,
-                message: `poistettiin '${person.name}'  `,
+          personService
+          .move(id)
+          .then(response => {
+            const persons = this.state.persons.filter(p => p.id !== id)
+            this.setState({
+                  persons,
+                  message: `poistettiin '${person.name}'  `,
+                })
+                setTimeout(() => {
+                  this.setState({message: null})
+                }, 5000)
+            })
+            .catch(error => {
+              alert(`Henkilön '${person.name}' tiedot on jo poistettu palvelimelta`)
+              this.setState({
+                persons: this.state.persons.filter(p => p.id !== id),
+                newName: '',
+                newNumber: ''
               })
-              setTimeout(() => {
-                this.setState({message: null})
-              }, 5000)
-          })
-      }
+            })
+        }
 
-    }
+      }
   }
 
   personInput = (event) =>  this.setState({
@@ -195,7 +217,7 @@ class App extends React.Component {
 
         <SearchForm filtter={this.state.filter} inputTxt={this.searchInput} />
 
-        <h2>Lisää uusi</h2>
+        <h2>Lisää uusi / muuta numeroa</h2>
         <AddForm
         add={this.addPerson}
         name={this.state.newName}
