@@ -1,61 +1,57 @@
-import React from 'react'
-import Kurssi from './components/Kurssi'
+import React from 'react';
 
-const Kurssit = ({ kurssit }) => {
-  return (
-    <div>
-      <h1>Opetusohjelma</h1>
-      {kurssit.map(kurssi => <Kurssi key={kurssi.id} kurssi={kurssi} />)}
-    </div>
-  )
-}
-
-const App = () => {
-  const kurssit = [
-    {
-      nimi: 'Half Stack -sovelluskehitys',
-      id: 1,
-      osat: [
-        {
-          nimi: 'Reactin perusteet',
-          tehtavia: 10,
-          id: 1
-        },
-        {
-          nimi: 'Tiedonvälitys propseilla',
-          tehtavia: 7,
-          id: 2
-        },
-        {
-          nimi: 'Komponenttien tila',
-          tehtavia: 14,
-          id: 3
-        }
-      ]
-    },
-    {
-      nimi: 'Node.js',
-      id: 2,
-      osat: [
-        {
-          nimi: 'Routing',
-          tehtavia: 3,
-          id: 1
-        },
-        {
-          nimi: 'Middlewaret',
-          tehtavia: 7,
-          id: 2
-        }
-      ]
+class App extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      persons: [
+        { name: 'Arto Hellas' },
+        { name: 'Esko Ukkonen' }
+      ],
+      newName: ''
     }
-  ]
+  }
 
-return (
-  <div>
-    <Kurssit kurssit={kurssit} />
-  </div>
-)
+  addPerson = (event) => {
+    event.preventDefault()
+    const personObject = {
+      name: this.state.newName
+    }
+
+    const persons = this.state.persons.concat(personObject)
+
+    this.setState({
+      persons,
+      newName: ''
+    })
+  }
+
+  handlePersonChange = (event) => {
+    console.log(event.target.value)
+    this.setState({ newName: event.target.value })
+  }
+
+  render() {
+    return (
+      <div>
+        <h2>Puhelinluettelo</h2>
+        <form onSubmit={this.addPerson}>
+          <div>
+          nimi:
+          <input value={this.state.newName} onChange={this.handlePersonChange} />
+          </div>
+          <button type="submit">tallenna</button>
+        </form>
+
+        <h2>Numerot</h2>
+
+        <div>
+          {this.state.persons.map((person, i) => <p key={i}>{person.name}</p>)}
+        </div>
+
+      </div>
+    )
+  }
 }
 
 export default App
