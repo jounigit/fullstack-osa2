@@ -1,29 +1,24 @@
 import React from 'react';
 import axios from 'axios'
 
-const Person = ({ person }) => <p>{person.name} {person.number}</p>
+const Country = ({ country }) => <p>{country.name}</p>
 
-const SearchForm = ({ filtter, inputTxt}) => {
+const CountrySpecs = ({ country }) => {
   return (
     <div>
-    rajaa näytettäviä:  <input value={filtter} onChange={inputTxt} />
+      <h2>{country.name}</h2>
+      <h4>capital: {country.capital}</h4>
+      <h4>population: {country.population}</h4>
+      <img src={country.flag} height="300" width="400" alt="kuva" />
     </div>
   )
 }
 
-const AddForm = ({add, name, number, inputP, inputN}) => {
+const SearchForm = ({ filtter, inputTxt}) => {
   return (
-    <form onSubmit={add}>
-      <div>
-      nimi:
-      <input value={name} onChange={inputP} />
-      </div>
-      <div>
-      numero:
-      <input value={number} onChange={inputN} />
-      </div>
-      <button type="submit">tallenna</button>
-    </form>
+    <div>
+    find countries:  <input value={filtter} onChange={inputTxt} />
+    </div>
   )
 }
 
@@ -31,12 +26,9 @@ class App extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      persons: [],
-      searchPersons: [],
-      newName: '',
-      newNumber: '',
-      filter: '',
-      showAll: true
+      countries: [],
+      searchCountries: [],
+      filter:''
     }
     console.log('constructor')
   }
@@ -44,76 +36,40 @@ class App extends React.Component {
   componentDidMount() {
     console.log('will mount')
     axios
-      .get('http://localhost:3001/persons')
+      .get('https://restcountries.eu/rest/v2/all')
       .then(response => {
         console.log('promise fulfilled')
-        this.setState({ persons: response.data })
+        this.setState({ countries: response.data })
       })
-  }
-
-  addPerson = (event) => {
-    event.preventDefault()
-    const names = this.state.persons.map(person => person.name)
-    if (names.includes(this.state.newName)) {
-      this.setState({
-        newName: '',
-        newNumber: ''
-       })
-       console.log('Nimi on jo käytössä!')
-       alert("Nimi on jo käytössä!")
-    } else {
-      const personObject = {
-        name: this.state.newName,
-        number: this.state.newNumber,
-        id: this.state.persons.length + 1
-    }
-
-      const persons = this.state.persons.concat(personObject)
-      this.setState({
-        persons,
-        newName: '',
-        newNumber: '',
-        filter: '',
-        showAll: true
-      })
-    }
-  }
-
-  personInput = (event) =>  this.setState({ newName: event.target.value })
-
-  numberIput = (event) => this.setState({ newNumber: event.target.value })
+   }
 
   searchInput = (event) => {
     this.setState({ filter: event.target.value })
     const re = new RegExp(event.target.value.toLowerCase(), 'g')
     const toLower = (str) => str.toLowerCase()
-    let searchPersons = this.state.persons.filter(x => toLower(x.name).match(re) )
-    console.log(searchPersons)
-    this.setState({ searchPersons, showAll: false })
-  }
+    let searchCountries = this.state.countries.filter(x => toLower(x.name).match(re) )
+    console.log(searchCountries)
+      this.setState({ searchCountries })
+   }
 
   render() {
-    const showPersons =
-    this.state.showAll ?
-    this.state.persons :
-    this.state.searchPersons
-    console.log('showPersons: ', showPersons )
-
+    console.log(this.state.searchCountries)
+    const showCountries = () => {
+      if (1 < this.state.searchCountries.length && this.state.searchCountries.length < 10) {
+          return this.state.searchCountries.map((c, i) => <Country key={i} country={c} />)
+      } else if (this.state.searchCountries.length > 10) {
+        return 'too many matches, specify another filter'
+      } else if (1 === this.state.searchCountries.length) {
+        return <CountrySpecs country={this.state.searchCountries[0]} />
+      }
+    }
+    
     return (
       <div>
         <SearchForm filtter={this.state.filter} inputTxt={this.searchInput} />
 
-        <h2>Puhelinluettelo</h2>
-        <AddForm
-        add={this.addPerson}
-        name={this.state.newName}
-        number={this.state.newNumber}
-        inputP={this.personInput}
-        inputN={this.numberIput} />
-
-        <h2>Numerot</h2>
         <div>
-          {showPersons.map(p => <Person key={p.id} person={p} />)}
+          {showCountries()}
         </div>
       </div>
     )
