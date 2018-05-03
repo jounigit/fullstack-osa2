@@ -5,12 +5,12 @@ const Otsikko = ({ kurssi }) => <h2>{kurssi.nimi}</h2>
 const Osa = ({ osa }) => <p>{osa.nimi} {osa.tehtavia}</p>
 
 const Yhteensa = ({ kurssi }) => {
-  let summa = 0
-  kurssi.osat.forEach((osa) => {
-      //console.log(osa.tehtavia)
-      summa = summa + osa.tehtavia
-    })
-    console.log('SUMMA: ', summa)
+  const osat = kurssi.osat
+  const t = osat.map(osa => osa.tehtavia)
+  const reducer = (varasto, lisaArvo) => varasto + lisaArvo
+  const summa = t.reduce(reducer)
+  console.log(t);
+  console.log('SUMMA: ', summa)
     return (
       <div>
         <p>yhteensä {summa} tehtävää</p>
