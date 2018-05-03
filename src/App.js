@@ -13,18 +13,25 @@ class App extends React.Component {
   }
 
   addPerson = (event) => {
-    event.preventDefault()
-    const personObject = {
-      name: this.state.newName
-    }
+   event.preventDefault()
+   const names = this.state.persons.map(person => person.name)
 
-    const persons = this.state.persons.concat(personObject)
+   if (names.includes(this.state.newName)) {
+     this.setState({ newName: '' })
+      console.log('Nimi on jo käytössä!')
+      alert("Nimi on jo käytössä!")
+   } else {
+     const personObject = {
+       name: this.state.newName
+     }
+     const persons = this.state.persons.concat(personObject)
 
-    this.setState({
-      persons,
-      newName: ''
-    })
-  }
+     this.setState({
+       persons,
+       newName: ''
+     })
+   }
+ }
 
   handlePersonChange = (event) => {
     console.log(event.target.value)
